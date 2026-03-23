@@ -1,0 +1,7 @@
+spacy==3.5.4
+thinc==8.1.9
+pydantic<2.5
+fastapi
+uvicorn
+sqlalchemy
+numpy==1.26.4

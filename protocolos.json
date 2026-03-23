@@ -1,0 +1,32 @@
+[
+    {
+        "protocolo": "20260323-0001",
+        "departamento": "Suporte Técnico",
+        "nome": "Joaquim Barbosa",
+        "contato": "bjoaquim242@gmail.com",
+        "descricao": "Meu computador parou de funcionar, provavelmente foi erro na memória ram",
+        "status": "Aberto",
+        "data": "23/03/2026",
+        "hora": "15:38"
+    },
+    {
+        "protocolo": "20260323-0002",
+        "departamento": "Tecnologia da Informação",
+        "nome": "Lucas Lopes",
+        "contato": "lucas@gmail.com",
+        "descricao": "Solicitação de contato para nova proposta de servidor\n\n3",
+        "status": "Aberto",
+        "data": "23/03/2026",
+        "hora": "15:40"
+    },
+    {
+        "protocolo": "20260323-0003",
+        "departamento": "Financeiro",
+        "nome": "Gislaine",
+        "contato": "gislaine@hotmail.com",
+        "descricao": "EMISSÃO DE NOTA FISCAL",
+        "status": "Aberto",
+        "data": "23/03/2026",
+        "hora": "15:43"
+    }
+]
