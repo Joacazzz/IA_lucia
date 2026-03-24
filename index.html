@@ -3,10 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script>
-      API = "https://ialucia-production.up.railway.app";
-      WS_URL = "wss://ialucia-production.up.railway.app/ws";
-  </script>
 <title>Lucía — Painel Administrativo v2</title>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -195,8 +191,8 @@ tr:hover td { background:rgba(255,255,255,.015); }
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-const API    = "http://localhost:8000";
-const WS_URL = "ws://localhost:8000/ws";
+const API = window.API || "https://ialucia-production.up.railway.app";
+const WS_URL = window.WS_URL || "wss://ialucia-production.up.railway.app/ws";
 
 // ── Mock data ────────────────────────────────────────────────
 const MOCK_DEPTOS = [
