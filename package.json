@@ -1,0 +1,16 @@
+{
+  "name": "ia-lucia-monorepo",
+  "private": true,
+  "version": "3.0.0",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev -w @ia-lucia/backend",
+    "dev:frontend": "npm run dev -w @ia-lucia/frontend",
+    "test": "npm run test -w @ia-lucia/backend",
+    "build": "npm run build -w @ia-lucia/frontend"
+  }
+}
