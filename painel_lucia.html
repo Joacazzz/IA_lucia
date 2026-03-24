@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lucía — Painel Administrativo v2</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:   #0c0e14; --bg2: #12151e; --bg3: #191d28; --bg4: #212636;
+  --b:    rgba(255,255,255,0.07); --b2: rgba(255,255,255,0.12);
+  --t:    #e8eaf0; --t2: #8b909e; --t3: #555a6a;
+  --acc:  #5b8ef0; --acc2: #3d6fd4; --acc-g: rgba(91,142,240,0.13);
+  --grn:  #3ecf8e; --grn-g: rgba(62,207,142,0.1);
+  --amb:  #f5a623; --amb-g: rgba(245,166,35,0.1);
+  --red:  #f06060; --red-g: rgba(240,96,96,0.1);
+  --pur:  #a78bfa; --pur-g: rgba(167,139,250,0.1);
+  --r: 10px; --rl: 14px;
+}
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t); min-height:100vh; font-size:14px; line-height:1.6; }
+::-webkit-scrollbar { width:3px; } ::-webkit-scrollbar-thumb { background:var(--bg4); border-radius:4px; }
+
+/* ── LOGIN ──────────────────────────────────────────────── */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:radial-gradient(ellipse at 30% 40%, rgba(91,142,240,0.07) 0%, transparent 60%), var(--bg); }
+.login-card { width:380px; background:var(--bg2); border:1px solid var(--b2); border-radius:var(--rl); padding:40px; }
+.login-logo { font-size:24px; font-weight:600; letter-spacing:-0.5px; margin-bottom:4px; }
+.login-sub  { font-size:12px; color:var(--t3); margin-bottom:32px; text-transform:uppercase; letter-spacing:1px; }
+.login-err  { background:var(--red-g); border:1px solid rgba(240,96,96,0.25); border-radius:var(--r); padding:10px 14px; font-size:13px; color:var(--red); margin-bottom:16px; }
+.login-hint { margin-top:20px; padding:12px; background:var(--bg3); border-radius:var(--r); font-size:12px; color:var(--t3); text-align:center; }
+.login-hint code { color:var(--acc); font-family:'DM Mono',monospace; }
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.layout  { display:flex; min-height:100vh; }
+.sidebar { width:220px; min-width:220px; background:var(--bg2); border-right:1px solid var(--b); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; }
+.logo    { padding:22px 18px 18px; border-bottom:1px solid var(--b); }
+.logo-title { font-size:18px; font-weight:600; letter-spacing:-0.3px; display:flex; align-items:center; gap:8px; }
+.logo-sub   { font-size:10px; color:var(--t3); margin-top:3px; text-transform:uppercase; letter-spacing:1px; }
+.dot  { width:7px; height:7px; background:var(--grn); border-radius:50%; box-shadow:0 0 6px var(--grn); animation:pulse 2s infinite; flex-shrink:0; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.nav { padding:10px 8px; flex:1; }
+.nav-lbl  { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--t3); padding:8px 10px 4px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:var(--r); cursor:pointer; color:var(--t2); font-size:13.5px; transition:all .15s; margin-bottom:2px; border:1px solid transparent; }
+.nav-item:hover { background:var(--bg3); color:var(--t); }
+.nav-item.active { background:var(--acc-g); color:var(--acc); border-color:rgba(91,142,240,0.2); font-weight:500; }
+.nav-icon  { width:18px; text-align:center; font-size:14px; }
+.nav-badge { margin-left:auto; background:var(--amb); color:#000; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; font-family:'DM Mono',monospace; }
+.notif-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:600; padding:1px 6px; border-radius:20px; font-family:'DM Mono',monospace; }
+.sidebar-foot { padding:14px 18px; border-top:1px solid var(--b); font-size:11px; color:var(--t3); }
+.user-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.avatar { width:28px; height:28px; border-radius:50%; background:var(--acc-g); border:1px solid rgba(91,142,240,0.3); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--acc); font-weight:600; flex-shrink:0; }
+.user-name { font-size:12px; color:var(--t2); font-weight:500; }
+.user-role { font-size:10px; color:var(--t3); }
+.logout-btn { width:100%; background:transparent; border:1px solid var(--b2); border-radius:var(--r); padding:6px; color:var(--t3); font-size:11.5px; cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; }
+.logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+/* ── MAIN ───────────────────────────────────────────────── */
+.main    { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+.topbar  { background:var(--bg2); border-bottom:1px solid var(--b); padding:13px 26px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.topbar-title { font-size:15px; font-weight:500; }
+.topbar-sub   { font-size:12px; color:var(--t3); margin-top:1px; }
+.content { flex:1; overflow-y:auto; padding:22px 26px; }
+
+/* ── BUTTONS ────────────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--r); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; font-family:'DM Sans',sans-serif; }
+.btn-primary { background:var(--acc); color:#fff; }
+.btn-primary:hover { background:var(--acc2); }
+.btn-ghost   { background:transparent; color:var(--t2); border:1px solid var(--b2); }
+.btn-ghost:hover { background:var(--bg3); color:var(--t); }
+.btn-danger  { background:var(--red-g); color:var(--red); border:1px solid rgba(240,96,96,0.2); }
+.btn-danger:hover { background:rgba(240,96,96,0.22); }
+.btn-sm { padding:4px 10px; font-size:12px; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+
+/* ── FORMS ──────────────────────────────────────────────── */
+.fg { margin-bottom:14px; }
+.fl { font-size:12px; color:var(--t2); margin-bottom:5px; display:block; font-weight:500; }
+.fi, .fs, .ft {
+  width:100%; background:var(--bg3); border:1px solid var(--b2); border-radius:var(--r);
+  padding:8px 12px; color:var(--t); font-size:13.5px; font-family:'DM Sans',sans-serif;
+  outline:none; transition:border-color .15s;
+}
+.fi:focus,.fs:focus,.ft:focus { border-color:var(--acc); }
+.fi::placeholder,.ft::placeholder { color:var(--t3); }
+.ft { resize:vertical; min-height:80px; line-height:1.5; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.select, .input {
+  background:var(--bg3); border:1px solid var(--b2); border-radius:var(--r);
+  padding:6px 10px; color:var(--t); font-size:12.5px; font-family:'DM Sans',sans-serif;
+  outline:none; transition:border-color .15s;
+}
+.select:focus,.input:focus { border-color:var(--acc); }
+.input { width:190px; }
+.input::placeholder { color:var(--t3); }
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--bg2); border:1px solid var(--b); border-radius:var(--rl); padding:18px 20px; position:relative; overflow:hidden; transition:border-color .2s; }
+.stat-card:hover { border-color:var(--b2); }
+.stat-acc   { position:absolute; top:0; right:0; width:3px; height:100%; }
+.stat-lbl   { font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--t3); margin-bottom:8px; }
+.stat-val   { font-size:28px; font-weight:600; line-height:1; letter-spacing:-1px; font-family:'DM Mono',monospace; }
+.stat-sub   { font-size:11px; color:var(--t3); margin-top:5px; }
+.card       { background:var(--bg2); border:1px solid var(--b); border-radius:var(--rl); overflow:hidden; }
+.card-hd    { padding:14px 18px; border-bottom:1px solid var(--b); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.card-title { font-size:14px; font-weight:500; }
+.card-sub   { font-size:11px; color:var(--t3); }
+.chart-wrap { padding:16px 18px; }
+
+/* ── CHARTS GRID ────────────────────────────────────────── */
+.charts-grid { display:grid; grid-template-columns:1fr 1.6fr; gap:14px; margin-bottom:20px; }
+.dash-grid   { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.chart-label { font-size:12px; color:var(--t3); margin-bottom:10px; }
+
+/* ── TABLE ──────────────────────────────────────────────── */
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--t3); border-bottom:1px solid var(--b); font-weight:500; }
+td { padding:11px 14px; border-bottom:1px solid var(--b); font-size:13px; color:var(--t2); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,.015); }
+.mono { font-family:'DM Mono',monospace; font-size:12px; color:var(--acc); }
+
+/* ── BADGES ─────────────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:500; white-space:nowrap; }
+.bd    { width:5px; height:5px; border-radius:50%; }
+.b-grn  { background:var(--grn-g); color:var(--grn); } .b-grn  .bd { background:var(--grn); }
+.b-amb  { background:var(--amb-g); color:var(--amb); } .b-amb  .bd { background:var(--amb); }
+.b-red  { background:var(--red-g); color:var(--red); } .b-red  .bd { background:var(--red); }
+.b-pur  { background:var(--pur-g); color:var(--pur); } .b-pur  .bd { background:var(--pur); }
+.b-gray { background:var(--bg4);   color:var(--t2);  } .b-gray .bd { background:var(--t3); }
+.depto-tag { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; background:var(--bg4); color:var(--t2); border:1px solid var(--b); }
+.role-tag  { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; }
+.role-admin  { background:rgba(91,142,240,.12); color:var(--acc); border:1px solid rgba(91,142,240,.2); }
+.role-atend  { background:var(--bg4); color:var(--t2); border:1px solid var(--b); }
+
+/* ── MODAL ──────────────────────────────────────────────── */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; animation:fi .15s ease; }
+@keyframes fi  { from{opacity:0} to{opacity:1} }
+@keyframes su  { from{transform:translateY(14px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal { background:var(--bg2); border:1px solid var(--b2); border-radius:var(--rl); width:500px; max-width:95vw; max-height:88vh; overflow-y:auto; animation:su .2s ease; }
+.modal-hd { padding:18px 22px 14px; border-bottom:1px solid var(--b); display:flex; align-items:center; justify-content:space-between; }
+.modal-title { font-size:15px; font-weight:500; }
+.modal-bd { padding:18px 22px; }
+.modal-ft { padding:14px 22px; border-top:1px solid var(--b); display:flex; gap:8px; justify-content:flex-end; }
+.close-btn { background:none; border:none; color:var(--t3); cursor:pointer; font-size:20px; padding:1px 6px; border-radius:6px; transition:all .15s; line-height:1; }
+.close-btn:hover { background:var(--bg4); color:var(--t); }
+.detail-row { display:flex; gap:8px; padding:9px 0; border-bottom:1px solid var(--b); align-items:flex-start; }
+.detail-row:last-child { border-bottom:none; }
+.dk { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:.5px; min-width:105px; padding-top:2px; }
+.dv { font-size:13px; color:var(--t); flex:1; }
+
+/* ── NOTIF ──────────────────────────────────────────────── */
+.notif-item { display:flex; gap:12px; padding:14px 16px; border-bottom:1px solid var(--b); align-items:flex-start; transition:background .15s; }
+.notif-item:hover { background:var(--bg3); }
+.notif-item:last-child { border-bottom:none; }
+.notif-icon { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; margin-top:2px; }
+.ni-new    { background:var(--acc-g); }
+.ni-update { background:var(--pur-g); }
+.notif-msg  { font-size:13px; color:var(--t); margin-bottom:3px; }
+.notif-time { font-size:11px; color:var(--t3); }
+
+/* ── TOAST ──────────────────────────────────────────────── */
+.toast-wrap { position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+.toast { background:var(--bg3); border:1px solid var(--b2); border-radius:var(--r); padding:11px 14px; font-size:13px; color:var(--t); animation:su .2s ease; display:flex; align-items:center; gap:8px; max-width:300px; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+.toast-success { border-left:3px solid var(--grn); }
+.toast-error   { border-left:3px solid var(--red); }
+.toast-info    { border-left:3px solid var(--acc); }
+
+/* ── MISC ───────────────────────────────────────────────── */
+.empty { text-align:center; padding:44px 22px; color:var(--t3); }
+.empty-icon { font-size:28px; margin-bottom:10px; }
+.empty-text { font-size:13px; }
+.api-banner { background:var(--amb-g); border:1px solid rgba(245,166,35,.2); border-radius:var(--r); padding:9px 14px; font-size:12.5px; color:var(--amb); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.banner-code { font-family:'DM Mono',monospace; background:rgba(0,0,0,.25); padding:1px 6px; border-radius:4px; font-size:11px; }
+.deptos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:13px; }
+.depto-card { background:var(--bg2); border:1px solid var(--b); border-radius:var(--rl); padding:18px; transition:border-color .2s,transform .15s; }
+.depto-card:hover { border-color:var(--b2); transform:translateY(-1px); }
+.depto-ic   { font-size:22px; margin-bottom:8px; }
+.depto-nm   { font-size:14px; font-weight:500; margin-bottom:3px; }
+.depto-ds   { font-size:12px; color:var(--t3); margin-bottom:10px; line-height:1.4; }
+.depto-row  { display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--t2); margin-bottom:3px; }
+.filters    { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const API    = "http://localhost:8000";
+const WS_URL = "ws://localhost:8000/ws";
+
+// ── Mock data ────────────────────────────────────────────────
+const MOCK_DEPTOS = [
+  {id:1,chave:"suporte",   nome:"Suporte Técnico",        icone:"🛠️", ramal:"1001",email:"suporte@empresa.com.br",  horario:"Seg–Sex 08h–18h",descricao:"Problemas técnicos e sistemas.",ativo:true},
+  {id:2,chave:"rh",        nome:"Recursos Humanos",       icone:"👥", ramal:"1002",email:"rh@empresa.com.br",        horario:"Seg–Sex 08h–17h",descricao:"Admissão, férias e benefícios.",ativo:true},
+  {id:3,chave:"financeiro",nome:"Financeiro",             icone:"💰", ramal:"1003",email:"financeiro@empresa.com.br",horario:"Seg–Sex 09h–17h",descricao:"Pagamentos e cobranças.",ativo:true},
+  {id:4,chave:"obras",     nome:"Secretaria de Obras",    icone:"🏗️",ramal:"1004",email:"obras@empresa.com.br",     horario:"Seg–Sex 07h–16h",descricao:"Licenças e alvarás.",ativo:true},
+  {id:5,chave:"juridico",  nome:"Jurídico",               icone:"⚖️",ramal:"1005",email:"juridico@empresa.com.br",  horario:"Seg–Sex 09h–18h",descricao:"Contratos e compliance.",ativo:true},
+  {id:6,chave:"ouvidoria", nome:"Ouvidoria",              icone:"📢", ramal:"1006",email:"ouvidoria@empresa.com.br", horario:"Seg–Sex 08h–18h",descricao:"Reclamações e sugestões.",ativo:true},
+  {id:7,chave:"compras",   nome:"Compras e Licitações",   icone:"🛒", ramal:"1007",email:"compras@empresa.com.br",   horario:"Seg–Sex 08h–17h",descricao:"Fornecedores e cotações.",ativo:true},
+  {id:8,chave:"ti",        nome:"Tecnologia da Informação",icone:"💻",ramal:"1008",email:"ti@empresa.com.br",         horario:"Seg–Sex 08h–18h",descricao:"Infraestrutura digital.",ativo:true},
+];
+
+const STATUSES = ["Aberto","Em andamento","Resolvido","Cancelado"];
+
+function genDate(daysAgo, h=9) {
+  const d = new Date(); d.setDate(d.getDate()-daysAgo); d.setHours(h,0,0,0);
+  return d.toISOString();
+}
+
+const MOCK_PROTOS = [
+  {id:1,numero:"20260323-0001",departamento_chave:"financeiro",nome_solicitante:"Ana Lima",      contato:"ana@email.com",    descricao:"Segunda via do boleto de março.",         status:"Aberto",       criado_em:genDate(0,9), atualizado_em:genDate(0,9)},
+  {id:2,numero:"20260322-0002",departamento_chave:"rh",         nome_solicitante:"Carlos Melo",  contato:"(11)99999-1234",   descricao:"Solicitação de férias para abril.",        status:"Em andamento", criado_em:genDate(1,10),atualizado_em:genDate(0,11)},
+  {id:3,numero:"20260321-0003",departamento_chave:"juridico",   nome_solicitante:"Beatriz Rios", contato:"bea@empresa.com",  descricao:"Revisão de contrato de fornecedor.",      status:"Resolvido",    criado_em:genDate(2,14),atualizado_em:genDate(1,8)},
+  {id:4,numero:"20260323-0004",departamento_chave:"suporte",    nome_solicitante:"Diego Faria",  contato:"diego@corp.com",   descricao:"Computador não acessa a VPN.",             status:"Aberto",       criado_em:genDate(0,11),atualizado_em:genDate(0,11)},
+  {id:5,numero:"20260322-0005",departamento_chave:"obras",      nome_solicitante:"Fernanda Cruz",contato:"(21)98888-5678",   descricao:"Alvará de reforma para sede.",             status:"Em andamento", criado_em:genDate(1,16),atualizado_em:genDate(0,9)},
+  {id:6,numero:"20260320-0006",departamento_chave:"ti",         nome_solicitante:"Gabriel Neto", contato:"gabriel@ti.com",   descricao:"Acesso ao servidor de produção.",         status:"Resolvido",    criado_em:genDate(3,9), atualizado_em:genDate(2,14)},
+  {id:7,numero:"20260319-0007",departamento_chave:"ouvidoria",  nome_solicitante:"Helena Vieira",contato:"hv@email.com",     descricao:"Reclamação sobre tempo de resposta.",     status:"Aberto",       criado_em:genDate(4,10),atualizado_em:genDate(4,10)},
+  {id:8,numero:"20260318-0008",departamento_chave:"compras",    nome_solicitante:"Igor Santos",  contato:"igor@suprimentos.com",descricao:"Cotação para papel A4 — 500 resmas.", status:"Resolvido",    criado_em:genDate(5,13),atualizado_em:genDate(3,9)},
+];
+
+const MOCK_ATEND = [
+  {id:1,nome:"Maria Souza",    email:"maria@empresa.com.br",   departamento_chave:"rh",       ativo:true},
+  {id:2,nome:"Pedro Alves",    email:"pedro@empresa.com.br",   departamento_chave:"financeiro",ativo:true},
+  {id:3,nome:"Lucia Ferreira", email:"lucia@empresa.com.br",   departamento_chave:"juridico", ativo:true},
+  {id:4,nome:"Rafael Costa",   email:"rafael@empresa.com.br",  departamento_chave:"suporte",  ativo:true},
+];
+
+// ── Helpers ──────────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+
+function statusBadge(s) {
+  const map = {
+    "Aberto":       <span className="badge b-amb"><span className="bd"/>{s}</span>,
+    "Em andamento": <span className="badge b-pur"><span className="bd"/>{s}</span>,
+    "Resolvido":    <span className="badge b-grn"><span className="bd"/>{s}</span>,
+    "Cancelado":    <span className="badge b-red"><span className="bd"/>{s}</span>,
+  };
+  return map[s] || <span className="badge b-gray">{s}</span>;
+}
+
+// ── Chart Component ──────────────────────────────────────────
+function ChartWidget({ type, data, options, height = 220 }) {
+  const ref  = useRef(null);
+  const inst = useRef(null);
+  const key  = JSON.stringify(data?.datasets?.map(d => d.data));
+
+  useEffect(() => {
+    if (!ref.current || typeof Chart === "undefined") return;
+    if (inst.current) { inst.current.destroy(); inst.current = null; }
+    Chart.defaults.color = "#8b909e";
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    inst.current = new Chart(ref.current, { type, data, options });
+    return () => { if (inst.current) { inst.current.destroy(); inst.current = null; } };
+  }, [key]);
+
+  return <canvas ref={ref} style={{ maxHeight: height + "px" }}/>;
+}
+
+// ── Toast ────────────────────────────────────────────────────
+function ToastList({ toasts, remove }) {
+  return (
+    <div className="toast-wrap">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast toast-${t.type}`} onClick={() => remove(t.id)}>
+          {t.type === "success" ? "✓" : t.type === "error" ? "✕" : "●"} {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Modal Detalhe Protocolo ──────────────────────────────────
+function ModalDetalhe({ proto, deptos, onClose, onUpdate, api }) {
+  const [status, setStatus] = useState(proto.status);
+  const [saving, setSaving] = useState(false);
+  const depto = deptos.find(d => d.chave === proto.departamento_chave);
+
+  async function salvar() {
+    setSaving(true);
+    try {
+      const r = await api(`/protocolos/${proto.numero}`, "PATCH", { status });
+      onUpdate(r);
+    } catch { onUpdate({ ...proto, status }); }
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hd">
+          <div className="modal-title">Protocolo <span className="mono">{proto.numero}</span></div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-bd">
+          <div className="detail-row"><span className="dk">Solicitante</span><span className="dv">{proto.nome_solicitante}</span></div>
+          <div className="detail-row"><span className="dk">Contato</span><span className="dv">{proto.contato}</span></div>
+          <div className="detail-row"><span className="dk">Departamento</span><span className="dv">{depto ? `${depto.icone} ${depto.nome}` : proto.departamento_chave}</span></div>
+          <div className="detail-row"><span className="dk">Abertura</span><span className="dv">{fmtDate(proto.criado_em)}</span></div>
+          <div className="detail-row"><span className="dk">Atualização</span><span className="dv">{fmtDate(proto.atualizado_em)}</span></div>
+          <div className="detail-row"><span className="dk">Descrição</span><span className="dv" style={{whiteSpace:"pre-wrap"}}>{proto.descricao}</span></div>
+          <div className="detail-row">
+            <span className="dk">Status</span>
+            <span className="dv">
+              <select className="fs" value={status} onChange={e => setStatus(e.target.value)} style={{width:"auto"}}>
+                {STATUSES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </span>
+          </div>
+        </div>
+        <div className="modal-ft">
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>Fechar</button>
+          <button className="btn btn-primary btn-sm" onClick={salvar} disabled={saving}>
+            {saving ? "Salvando…" : "Salvar status"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal Novo Protocolo ─────────────────────────────────────
+function ModalNovo({ deptos, onClose, onCreate, api }) {
+  const [f, setF] = useState({ departamento_chave:"", nome_solicitante:"", contato:"", descricao:"" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+
+  async function salvar() {
+    if (!f.departamento_chave || !f.nome_solicitante || !f.descricao) {
+      setErr("Preencha os campos obrigatórios."); return;
+    }
+    setSaving(true);
+    try {
+      const r = await api("/protocolos", "POST", f);
+      onCreate(r);
+    } catch {
+      const novo = {
+        id: Date.now(), numero: `${new Date().toISOString().slice(0,10).replace(/-/g,"")}-${String(Math.floor(Math.random()*9000)+1000)}`,
+        ...f, status:"Aberto", criado_em:new Date().toISOString(), atualizado_em:new Date().toISOString()
+      };
+      onCreate(novo);
+    }
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hd">
+          <div className="modal-title">Novo protocolo</div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-bd">
+          {err && <div className="login-err" style={{marginBottom:14}}>{err}</div>}
+          <div className="g2">
+            <div className="fg"><label className="fl">Nome do solicitante *</label>
+              <input className="fi" placeholder="Nome completo" value={f.nome_solicitante} onChange={e=>set("nome_solicitante",e.target.value)}/></div>
+            <div className="fg"><label className="fl">Contato</label>
+              <input className="fi" placeholder="E-mail ou telefone" value={f.contato} onChange={e=>set("contato",e.target.value)}/></div>
+          </div>
+          <div className="fg"><label className="fl">Departamento *</label>
+            <select className="fs" value={f.departamento_chave} onChange={e=>set("departamento_chave",e.target.value)}>
+              <option value="">Selecione…</option>
+              {deptos.map(d => <option key={d.chave} value={d.chave}>{d.icone} {d.nome}</option>)}
+            </select>
+          </div>
+          <div className="fg"><label className="fl">Descrição *</label>
+            <textarea className="ft" placeholder="Descreva detalhadamente…" value={f.descricao} onChange={e=>set("descricao",e.target.value)}/></div>
+        </div>
+        <div className="modal-ft">
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary btn-sm" onClick={salvar} disabled={saving}>
+            {saving ? "Criando…" : "Criar protocolo"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal Novo Atendente ─────────────────────────────────────
+function ModalNovoAtendente({ deptos, onClose, onCreate, api }) {
+  const [f, setF] = useState({ nome:"", email:"", departamento_chave:"" });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setF(p => ({...p,[k]:v}));
+
+  async function salvar() {
+    if (!f.nome || !f.email || !f.departamento_chave) return;
+    setSaving(true);
+    try {
+      const r = await api("/atendentes", "POST", f);
+      onCreate(r);
+    } catch {
+      onCreate({ id: Date.now(), ...f, ativo:true });
+    }
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hd">
+          <div className="modal-title">Novo atendente</div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-bd">
+          <div className="fg"><label className="fl">Nome completo *</label>
+            <input className="fi" placeholder="Nome" value={f.nome} onChange={e=>set("nome",e.target.value)}/></div>
+          <div className="fg"><label className="fl">E-mail *</label>
+            <input className="fi" placeholder="email@empresa.com.br" value={f.email} onChange={e=>set("email",e.target.value)}/></div>
+          <div className="fg"><label className="fl">Departamento *</label>
+            <select className="fs" value={f.departamento_chave} onChange={e=>set("departamento_chave",e.target.value)}>
+              <option value="">Selecione…</option>
+              {deptos.map(d => <option key={d.chave} value={d.chave}>{d.icone} {d.nome}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="modal-ft">
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary btn-sm" onClick={salvar} disabled={saving}>
+            {saving ? "Salvando…" : "Cadastrar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Pages ────────────────────────────────────────────────────
+function PageDashboard({ protos, deptos }) {
+  const cnt = s => protos.filter(p => p.status === s).length;
+
+  // Doughnut data
+  const doughnutData = {
+    labels: ["Aberto","Em andamento","Resolvido","Cancelado"],
+    datasets: [{ data: [cnt("Aberto"),cnt("Em andamento"),cnt("Resolvido"),cnt("Cancelado")],
+      backgroundColor: ["#f5a623","#a78bfa","#3ecf8e","#f06060"],
+      borderWidth: 0, hoverOffset: 6 }]
+  };
+  const doughnutOpts = {
+    responsive:true, maintainAspectRatio:false, cutout:"68%",
+    plugins:{ legend:{ position:"bottom", labels:{ color:"#8b909e", padding:14, font:{size:12} } } }
+  };
+
+  // Bar chart - by department
+  const deptData = deptos.map(d => ({ nome:d.nome.split(" ")[0], count:protos.filter(p=>p.departamento_chave===d.chave).length })).filter(d=>d.count>0);
+  const barData = {
+    labels: deptData.map(d=>d.nome),
+    datasets:[{ data:deptData.map(d=>d.count), backgroundColor:"rgba(91,142,240,0.7)", borderRadius:4, maxBarThickness:20 }]
+  };
+  const barOpts = {
+    indexAxis:"y", responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ x:{ grid:{color:"rgba(255,255,255,0.04)"}, ticks:{color:"#8b909e",stepSize:1} },
+             y:{ grid:{display:false}, ticks:{color:"#8b909e",font:{size:11}} } }
+  };
+
+  // Line chart - last 7 days
+  const days = Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-6+i);
+    return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+  });
+  const dayCounts = Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-6+i);
+    const ds = d.toDateString();
+    return protos.filter(p => new Date(p.criado_em).toDateString() === ds).length;
+  });
+  const lineData = {
+    labels: days,
+    datasets:[{ data:dayCounts, borderColor:"#5b8ef0", backgroundColor:"rgba(91,142,240,0.07)",
+      fill:true, tension:0.4, pointBackgroundColor:"#5b8ef0", pointRadius:4, pointHoverRadius:6, borderWidth:2 }]
+  };
+  const lineOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ x:{ grid:{color:"rgba(255,255,255,0.04)"}, ticks:{color:"#8b909e"} },
+             y:{ grid:{color:"rgba(255,255,255,0.04)"}, ticks:{color:"#8b909e",stepSize:1}, min:0 } }
+  };
+
+  const recentes = [...protos].sort((a,b)=>new Date(b.criado_em)-new Date(a.criado_em)).slice(0,5);
+
+  return (
+    <>
+      <div className="stats-grid">
+        {[
+          {label:"Total",   val:protos.length,      color:"var(--acc)", sub:"todos os departamentos"},
+          {label:"Abertos", val:cnt("Aberto"),       color:"var(--amb)", sub:"aguardando atendimento"},
+          {label:"Em andamento", val:cnt("Em andamento"), color:"var(--pur)", sub:"sendo processados"},
+          {label:"Resolvidos",   val:cnt("Resolvido"),    color:"var(--grn)", sub:"concluídos"},
+        ].map(s => (
+          <div className="stat-card" key={s.label}>
+            <div className="stat-acc" style={{background:s.color}}/>
+            <div className="stat-lbl">{s.label}</div>
+            <div className="stat-val" style={{color:s.color}}>{s.val}</div>
+            <div className="stat-sub">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="charts-grid">
+        <div className="card">
+          <div className="card-hd"><div className="card-title">Distribuição por status</div></div>
+          <div className="chart-wrap"><ChartWidget type="doughnut" data={doughnutData} options={doughnutOpts} height={220}/></div>
+        </div>
+        <div className="card">
+          <div className="card-hd"><div className="card-title">Protocolos por departamento</div></div>
+          <div className="chart-wrap"><ChartWidget type="bar" data={barData} options={barOpts} height={220}/></div>
+        </div>
+      </div>
+
+      <div style={{marginBottom:14}}>
+        <div className="card">
+          <div className="card-hd"><div className="card-title">Tendência — últimos 7 dias</div></div>
+          <div className="chart-wrap"><ChartWidget type="line" data={lineData} options={lineOpts} height={160}/></div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-hd"><div className="card-title">Atividade recente</div></div>
+        {recentes.length === 0 ? <div className="empty"><div className="empty-text">Sem protocolos</div></div> : (
+          <table><thead><tr><th>Número</th><th>Solicitante</th><th>Departamento</th><th>Status</th><th>Data</th></tr></thead>
+          <tbody>{recentes.map(p => {
+            const d = deptos.find(x=>x.chave===p.departamento_chave);
+            return <tr key={p.numero}>
+              <td><span className="mono">{p.numero}</span></td>
+              <td style={{color:"var(--t)"}}>{p.nome_solicitante}</td>
+              <td><span className="depto-tag">{d?`${d.icone} ${d.nome}`:p.departamento_chave}</span></td>
+              <td>{statusBadge(p.status)}</td>
+              <td>{fmtDate(p.criado_em)}</td>
+            </tr>;
+          })}</tbody></table>
+        )}
+      </div>
+    </>
+  );
+}
+
+function PageProtocolos({ deptos, protos, setProtos, api }) {
+  const [fDepto, setFDepto] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [busca, setBusca] = useState("");
+  const [sel, setSel] = useState(null);
+  const [novo, setNovo] = useState(false);
+
+  const filtered = protos.filter(p => {
+    if (fDepto  && p.departamento_chave !== fDepto) return false;
+    if (fStatus && p.status !== fStatus) return false;
+    if (busca   && !p.nome_solicitante.toLowerCase().includes(busca.toLowerCase()) && !p.numero.includes(busca)) return false;
+    return true;
+  });
+
+  return (
+    <>
+      <div className="card">
+        <div className="card-hd">
+          <div><div className="card-title">Protocolos</div><div className="card-sub">{filtered.length} registro(s)</div></div>
+          <div className="filters">
+            <input className="input" placeholder="Buscar nome ou nº…" value={busca} onChange={e=>setBusca(e.target.value)}/>
+            <select className="select" value={fDepto} onChange={e=>setFDepto(e.target.value)}>
+              <option value="">Todos os deptos</option>
+              {deptos.map(d=><option key={d.chave} value={d.chave}>{d.nome}</option>)}
+            </select>
+            <select className="select" value={fStatus} onChange={e=>setFStatus(e.target.value)}>
+              <option value="">Todos os status</option>
+              {STATUSES.map(s=><option key={s}>{s}</option>)}
+            </select>
+            <button className="btn btn-primary btn-sm" onClick={()=>setNovo(true)}>+ Novo</button>
+          </div>
+        </div>
+        {filtered.length === 0 ? <div className="empty"><div className="empty-icon">📋</div><div className="empty-text">Nenhum protocolo encontrado</div></div> : (
+          <table><thead><tr><th>Número</th><th>Solicitante</th><th>Departamento</th><th>Status</th><th>Data</th><th></th></tr></thead>
+          <tbody>{filtered.map(p => {
+            const d = deptos.find(x=>x.chave===p.departamento_chave);
+            return <tr key={p.numero}>
+              <td><span className="mono">{p.numero}</span></td>
+              <td style={{color:"var(--t)"}}>{p.nome_solicitante}</td>
+              <td><span className="depto-tag">{d?`${d.icone} ${d.nome}`:p.departamento_chave}</span></td>
+              <td>{statusBadge(p.status)}</td>
+              <td>{fmtDate(p.criado_em)}</td>
+              <td><button className="btn btn-ghost btn-sm" onClick={()=>setSel(p)}>Ver</button></td>
+            </tr>;
+          })}</tbody></table>
+        )}
+      </div>
+      {sel  && <ModalDetalhe proto={sel} deptos={deptos} onClose={()=>setSel(null)} api={api}
+                 onUpdate={u=>{ setProtos(ps=>ps.map(p=>p.numero===u.numero?u:p)); setSel(null); }}/>}
+      {novo && <ModalNovo deptos={deptos} onClose={()=>setNovo(false)} api={api}
+                 onCreate={n=>{ setProtos(ps=>[n,...ps]); }}/>}
+    </>
+  );
+}
+
+function PageAtendentes({ deptos, atendentes, setAtendentes, api }) {
+  const [fDepto, setFDepto] = useState("");
+  const [novo, setNovo] = useState(false);
+
+  const filtered = atendentes.filter(a => !fDepto || a.departamento_chave === fDepto);
+
+  async function remover(id) {
+    try { await api(`/atendentes/${id}`, "DELETE"); } catch {}
+    setAtendentes(ps => ps.filter(a => a.id !== id));
+  }
+
+  return (
+    <>
+      <div className="card">
+        <div className="card-hd">
+          <div><div className="card-title">Atendentes</div><div className="card-sub">{filtered.length} ativo(s)</div></div>
+          <div className="filters">
+            <select className="select" value={fDepto} onChange={e=>setFDepto(e.target.value)}>
+              <option value="">Todos os deptos</option>
+              {deptos.map(d=><option key={d.chave} value={d.chave}>{d.nome}</option>)}
+            </select>
+            <button className="btn btn-primary btn-sm" onClick={()=>setNovo(true)}>+ Cadastrar</button>
+          </div>
+        </div>
+        {filtered.length === 0 ? <div className="empty"><div className="empty-icon">👤</div><div className="empty-text">Nenhum atendente cadastrado</div></div> : (
+          <table><thead><tr><th>Nome</th><th>E-mail</th><th>Departamento</th><th></th></tr></thead>
+          <tbody>{filtered.map(a => {
+            const d = deptos.find(x=>x.chave===a.departamento_chave);
+            return <tr key={a.id}>
+              <td style={{color:"var(--t)"}}>{a.nome}</td>
+              <td>{a.email}</td>
+              <td><span className="depto-tag">{d?`${d.icone} ${d.nome}`:a.departamento_chave}</span></td>
+              <td><button className="btn btn-danger btn-sm" onClick={()=>remover(a.id)}>Remover</button></td>
+            </tr>;
+          })}</tbody></table>
+        )}
+      </div>
+      {novo && <ModalNovoAtendente deptos={deptos} onClose={()=>setNovo(false)} api={api}
+                 onCreate={n=>{ setAtendentes(ps=>[...ps,n]); }}/>}
+    </>
+  );
+}
+
+function PageDepartamentos({ deptos }) {
+  return (
+    <div className="deptos-grid">
+      {deptos.map(d => (
+        <div className="depto-card" key={d.chave}>
+          <div className="depto-ic">{d.icone}</div>
+          <div className="depto-nm">{d.nome}</div>
+          <div className="depto-ds">{d.descricao}</div>
+          <div className="depto-row">📞 Ramal <strong>{d.ramal}</strong></div>
+          <div className="depto-row">📧 {d.email}</div>
+          <div className="depto-row">🕐 {d.horario}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PageNotificacoes({ notifs, clear }) {
+  return (
+    <div className="card">
+      <div className="card-hd">
+        <div><div className="card-title">Notificações em tempo real</div><div className="card-sub">{notifs.length} evento(s)</div></div>
+        {notifs.length > 0 && <button className="btn btn-ghost btn-sm" onClick={clear}>Limpar</button>}
+      </div>
+      {notifs.length === 0 ? (
+        <div className="empty"><div className="empty-icon">🔔</div><div className="empty-text">Sem notificações ainda. Crie ou atualize um protocolo para ver as notificações em tempo real.</div></div>
+      ) : (
+        notifs.map(n => (
+          <div className="notif-item" key={n.id}>
+            <div className={`notif-icon ${n.tipo === "novo_protocolo" ? "ni-new" : "ni-update"}`}>
+              {n.tipo === "novo_protocolo" ? "📋" : "🔄"}
+            </div>
+            <div>
+              <div className="notif-msg">{n.mensagem}</div>
+              <div className="notif-time">{n.timestamp ? new Date(n.timestamp).toLocaleTimeString("pt-BR") : "agora"}</div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ── Login ────────────────────────────────────────────────────
+function LoginPage({ onLogin }) {
+  const [email, setEmail]     = useState("admin@lucia.com");
+  const [senha, setSenha]     = useState("admin123");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro]       = useState("");
+
+  async function handleLogin() {
+    setLoading(true); setErro("");
+    try {
+      const r = await fetch(`${API}/auth/login`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ email, password: senha })
+      });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.detail || "Erro"); }
+      const data = await r.json();
+      onLogin(data.access_token, data.user);
+    } catch (e) {
+      if (e.message.includes("Failed to fetch")) {
+        // Modo demo offline
+        onLogin("demo-token", { id:1, nome:"Administrador (Demo)", email, papel:"admin" });
+      } else {
+        setErro(e.message);
+      }
+    }
+    setLoading(false);
+  }
+
+  function handleKey(e) { if (e.key === "Enter") handleLogin(); }
+
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="login-logo">🔷 Lucía</div>
+        <div className="login-sub">Central de Atendimento · Painel Admin</div>
+        {erro && <div className="login-err">{erro}</div>}
+        <div className="fg"><label className="fl">E-mail</label>
+          <input className="fi" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={handleKey}/></div>
+        <div className="fg"><label className="fl">Senha</label>
+          <input className="fi" type="password" value={senha} onChange={e=>setSenha(e.target.value)} onKeyDown={handleKey}/></div>
+        <button className="btn btn-primary" style={{width:"100%",justifyContent:"center",marginTop:4}} onClick={handleLogin} disabled={loading}>
+          {loading ? "Entrando…" : "Entrar"}
+        </button>
+        <div className="login-hint">
+          Login padrão: <code>admin@lucia.com</code> / <code>admin123</code><br/>
+          (Se a API estiver offline, o painel abre em modo demonstração)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── APP ──────────────────────────────────────────────────────
+function App() {
+  const [token,       setToken]       = useState(localStorage.getItem("lucia_token"));
+  const [user,        setUser]        = useState(JSON.parse(localStorage.getItem("lucia_user") || "null"));
+  const [page,        setPage]        = useState("dashboard");
+  const [notifs,      setNotifs]      = useState([]);
+  const [unread,      setUnread]      = useState(0);
+  const [deptos,      setDeptos]      = useState(MOCK_DEPTOS);
+  const [protos,      setProtos]      = useState(MOCK_PROTOS);
+  const [atendentes,  setAtendentes]  = useState(MOCK_ATEND);
+  const [apiOk,       setApiOk]       = useState(false);
+  const [toasts,      setToasts]      = useState([]);
+  const wsRef = useRef(null);
+
+  function showToast(msg, type="success") {
+    const id = Date.now();
+    setToasts(t => [...t, {id, msg, type}]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
+  }
+
+  function removeToast(id) { setToasts(t => t.filter(x => x.id !== id)); }
+
+  // API helper
+  const api = useCallback(async (path, method="GET", body=null) => {
+    const opts = {
+      method,
+      headers: { "Content-Type":"application/json", ...(token && token !== "demo-token" ? {"Authorization":`Bearer ${token}`} : {}) }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(`${API}${path}`, opts);
+    if (!r.ok) { const d = await r.json(); throw new Error(d.detail || "Erro"); }
+    return method === "DELETE" ? null : r.json();
+  }, [token]);
+
+  // Load data from API
+  useEffect(() => {
+    if (!token || token === "demo-token") return;
+    api("/departamentos").then(d => { if (d?.length) setDeptos(d); setApiOk(true); }).catch(()=>{});
+    api("/protocolos?limit=200").then(d => { if (d) { setProtos(d); setApiOk(true); } }).catch(()=>{});
+    api("/atendentes").then(d => { if (d) setAtendentes(d); }).catch(()=>{});
+  }, [token]);
+
+  // WebSocket
+  useEffect(() => {
+    if (!token || token === "demo-token") return;
+    const ws = new WebSocket(WS_URL);
+    ws.onmessage = e => {
+      const data = JSON.parse(e.data);
+      setNotifs(n => [{ ...data, id: Date.now() }, ...n].slice(0,100));
+      setUnread(u => u+1);
+      showToast(data.mensagem, "info");
+      // Update protocols list on new or updated
+      if (data.tipo === "status_atualizado") {
+        setProtos(ps => ps.map(p => p.numero === data.protocolo ? {...p, status:data.status} : p));
+      }
+    };
+    ws.onerror = ()=>{};
+    wsRef.current = ws;
+    return () => ws.close();
+  }, [token]);
+
+  function handleLogin(tok, usr) {
+    localStorage.setItem("lucia_token", tok);
+    localStorage.setItem("lucia_user", JSON.stringify(usr));
+    setToken(tok); setUser(usr);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("lucia_token");
+    localStorage.removeItem("lucia_user");
+    setToken(null); setUser(null);
+    if (wsRef.current) wsRef.current.close();
+  }
+
+  function goPage(p) {
+    setPage(p);
+    if (p === "notificacoes") setUnread(0);
+  }
+
+  if (!token) return <LoginPage onLogin={handleLogin}/>;
+
+  const pages = [
+    { id:"dashboard",      icon:"◈",   label:"Dashboard" },
+    { id:"protocolos",     icon:"📋",  label:"Protocolos", badge: protos.filter(p=>p.status==="Aberto").length || null },
+    { id:"atendentes",     icon:"👤",  label:"Atendentes" },
+    { id:"departamentos",  icon:"🏢",  label:"Departamentos" },
+    { id:"notificacoes",   icon:"🔔",  label:"Notificações", notif: unread || null },
+  ];
+
+  const titles = { dashboard:"Dashboard", protocolos:"Protocolos", atendentes:"Atendentes", departamentos:"Departamentos", notificacoes:"Notificações" };
+
+  return (
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="logo">
+          <div className="logo-title"><span className="dot"/>Lucía</div>
+          <div className="logo-sub">Painel Administrativo</div>
+        </div>
+        <nav className="nav">
+          <div className="nav-lbl">Menu</div>
+          {pages.map(p => (
+            <div key={p.id} className={`nav-item ${page===p.id?"active":""}`} onClick={()=>goPage(p.id)}>
+              <span className="nav-icon">{p.icon}</span>
+              {p.label}
+              {p.badge  ? <span className="nav-badge">{p.badge}</span>  : null}
+              {p.notif  ? <span className="notif-badge">{p.notif}</span> : null}
+            </div>
+          ))}
+        </nav>
+        <div className="sidebar-foot">
+          {user && (
+            <div className="user-row">
+              <div className="avatar">{user.nome.charAt(0).toUpperCase()}</div>
+              <div><div className="user-name">{user.nome.split(" ")[0]}</div>
+                <div className="user-role">{user.papel === "admin" ? "Administrador" : "Atendente"}</div></div>
+            </div>
+          )}
+          <button className="logout-btn" onClick={handleLogout}>Sair da conta</button>
+          <div style={{marginTop:8}}>{apiOk ? "🟢 API conectada" : "🟡 Modo demo"}</div>
+        </div>
+      </aside>
+
+      <div className="main">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">{titles[page]}</div>
+            <div className="topbar-sub">Central de Atendimento ao Cidadão</div>
+          </div>
+          <div style={{fontSize:12,color:"var(--t3)",fontFamily:"DM Mono,monospace"}}>
+            {new Date().toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
+          </div>
+        </div>
+
+        <div className="content">
+          {!apiOk && (
+            <div className="api-banner">
+              ⚠️ API offline — dados de demonstração. Para conectar: <span className="banner-code">python -m uvicorn main:app --reload</span>
+            </div>
+          )}
+          {page === "dashboard"     && <PageDashboard protos={protos} deptos={deptos}/>}
+          {page === "protocolos"    && <PageProtocolos deptos={deptos} protos={protos} setProtos={setProtos} api={api}/>}
+          {page === "atendentes"    && <PageAtendentes deptos={deptos} atendentes={atendentes} setAtendentes={setAtendentes} api={api}/>}
+          {page === "departamentos" && <PageDepartamentos deptos={deptos}/>}
+          {page === "notificacoes"  && <PageNotificacoes notifs={notifs} clear={()=>setNotifs([])}/>}
+        </div>
+      </div>
+
+      <ToastList toasts={toasts} remove={removeToast}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
