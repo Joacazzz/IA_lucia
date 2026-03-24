@@ -240,3 +240,13 @@ def criar_usuario(body: UsuarioIn, db: Session = Depends(get_db), _=Depends(requ
 @app.get("/", tags=["Sistema"])
 def raiz():
     return {"sistema": "Lucia v2", "status": "online", "docs": "/docs"}
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+# Serve o painel HTML na raiz
+@app.get("/painel", tags=["Frontend"])
+def painel():
+    html_path = os.path.join(os.path.dirname(__file__), "painel_lucia_v2.html")
+    return FileResponse(html_path)
