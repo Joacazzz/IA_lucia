@@ -1,4 +1,4 @@
-﻿﻿from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+﻿from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -15,7 +15,7 @@ app.add_middleware(
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 
-# ── WebSocket Manager ──────────────────────────────────────────
+ # WebSocket Manager --
 class WSManager:
     def __init__(self):
         self.connections: list[WebSocket] = []
@@ -40,7 +40,7 @@ class WSManager:
 
 manager = WSManager()
 
-# ── Startup ────────────────────────────────────────────────────
+# â”€â”€ Startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.on_event("startup")
 def startup():
     criar_banco()
@@ -85,7 +85,7 @@ def _num(db):
     total = db.query(Protocolo).count() + 1
     return f"{hoje}-{str(total).zfill(4)}"
 
-# ── Schemas ────────────────────────────────────────────────────
+# â”€â”€ Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class LoginIn(BaseModel):
     email: str
     password: str
@@ -111,7 +111,7 @@ class UsuarioIn(BaseModel):
     senha: str
     papel: str = "atendente"
 
-# ── Auth ───────────────────────────────────────────────────────
+# â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.post("/auth/login", tags=["Auth"])
 def login(body: LoginIn, db: Session = Depends(get_db)):
     user = db.query(Usuario).filter(Usuario.email == body.email, Usuario.ativo == True).first()
@@ -127,7 +127,7 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
 def me(u: Usuario = Depends(get_current_user)):
     return {"id": u.id, "nome": u.nome, "email": u.email, "papel": u.papel}
 
-# ── WebSocket ──────────────────────────────────────────────────
+# â”€â”€ WebSocket â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
     await manager.connect(ws)
@@ -137,12 +137,12 @@ async def ws_endpoint(ws: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
-# ── Departamentos ──────────────────────────────────────────────
+# â”€â”€ Departamentos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/departamentos", tags=["Departamentos"])
 def listar_deptos(db: Session = Depends(get_db), _=Depends(get_current_user)):
     return db.query(Departamento).filter(Departamento.ativo == True).all()
 
-# ── Protocolos ─────────────────────────────────────────────────
+# â”€â”€ Protocolos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/protocolos", tags=["Protocolos"])
 def listar(departamento: Optional[str] = None, status: Optional[str] = None,
            limit: int = Query(200, le=500), db: Session = Depends(get_db), _=Depends(get_current_user)):
@@ -154,13 +154,13 @@ def listar(departamento: Optional[str] = None, status: Optional[str] = None,
 @app.get("/protocolos/{numero}", tags=["Protocolos"])
 def buscar(numero: str, db: Session = Depends(get_db), _=Depends(get_current_user)):
     p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
-    if not p: raise HTTPException(404, "Protocolo não encontrado.")
+    if not p: raise HTTPException(404, "Protocolo nÃ£o encontrado.")
     return p
 
 @app.post("/protocolos", status_code=201, tags=["Protocolos"])
 async def criar(body: ProtoCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if not db.query(Departamento).filter(Departamento.chave == body.departamento_chave).first():
-        raise HTTPException(400, "Departamento inválido.")
+        raise HTTPException(400, "Departamento invÃ¡lido.")
     p = Protocolo(numero=_num(db), departamento_chave=body.departamento_chave,
                   nome_solicitante=body.nome_solicitante, contato=body.contato,
                   descricao=body.descricao, status="Aberto")
@@ -168,7 +168,7 @@ async def criar(body: ProtoCreate, db: Session = Depends(get_db), _=Depends(get_
     d = db.query(Departamento).filter(Departamento.chave == body.departamento_chave).first()
     await manager.broadcast({
         "tipo": "novo_protocolo",
-        "mensagem": f"Novo protocolo {p.numero} — {d.nome if d else body.departamento_chave}",
+        "mensagem": f"Novo protocolo {p.numero} â€” {d.nome if d else body.departamento_chave}",
         "protocolo": p.numero, "departamento": body.departamento_chave,
         "timestamp": datetime.datetime.now().isoformat()
     })
@@ -177,10 +177,10 @@ async def criar(body: ProtoCreate, db: Session = Depends(get_db), _=Depends(get_
 @app.patch("/protocolos/{numero}", tags=["Protocolos"])
 async def atualizar(numero: str, body: ProtoUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
-    if not p: raise HTTPException(404, "Protocolo não encontrado.")
+    if not p: raise HTTPException(404, "Protocolo nÃ£o encontrado.")
     validos = ["Aberto", "Em andamento", "Resolvido", "Cancelado"]
     if body.status and body.status not in validos:
-        raise HTTPException(400, f"Status inválido. Use: {validos}")
+        raise HTTPException(400, f"Status invÃ¡lido. Use: {validos}")
     if body.status:  p.status   = body.status
     if body.descricao: p.descricao = body.descricao
     p.atualizado_em = datetime.datetime.utcnow()
@@ -196,11 +196,11 @@ async def atualizar(numero: str, body: ProtoUpdate, db: Session = Depends(get_db
 @app.delete("/protocolos/{numero}", tags=["Protocolos"])
 def deletar(numero: str, db: Session = Depends(get_db), _=Depends(get_current_user)):
     p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
-    if not p: raise HTTPException(404, "Protocolo não encontrado.")
+    if not p: raise HTTPException(404, "Protocolo nÃ£o encontrado.")
     db.delete(p); db.commit()
     return {"mensagem": f"Protocolo {numero} removido."}
 
-# ── Atendentes ─────────────────────────────────────────────────
+# â”€â”€ Atendentes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/atendentes", tags=["Atendentes"])
 def listar_atendentes(departamento: Optional[str] = None, db: Session = Depends(get_db), _=Depends(get_current_user)):
     q = db.query(Atendente).filter(Atendente.ativo == True)
@@ -210,7 +210,7 @@ def listar_atendentes(departamento: Optional[str] = None, db: Session = Depends(
 @app.post("/atendentes", status_code=201, tags=["Atendentes"])
 def add_atendente(body: AtendenteIn, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if db.query(Atendente).filter(Atendente.email == body.email).first():
-        raise HTTPException(400, "E-mail já cadastrado.")
+        raise HTTPException(400, "E-mail jÃ¡ cadastrado.")
     a = Atendente(nome=body.nome, email=body.email, departamento_chave=body.departamento_chave)
     db.add(a); db.commit(); db.refresh(a)
     return a
@@ -218,20 +218,20 @@ def add_atendente(body: AtendenteIn, db: Session = Depends(get_db), _=Depends(ge
 @app.delete("/atendentes/{id}", tags=["Atendentes"])
 def del_atendente(id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     a = db.query(Atendente).filter(Atendente.id == id).first()
-    if not a: raise HTTPException(404, "Atendente não encontrado.")
+    if not a: raise HTTPException(404, "Atendente nÃ£o encontrado.")
     a.ativo = False; db.commit()
     return {"mensagem": f"Atendente {a.nome} desativado."}
 
-# ── Usuários (admin) ───────────────────────────────────────────
-@app.get("/usuarios", tags=["Usuários"])
+# â”€â”€ UsuÃ¡rios (admin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+@app.get("/usuarios", tags=["UsuÃ¡rios"])
 def listar_usuarios(db: Session = Depends(get_db), _=Depends(require_admin)):
     users = db.query(Usuario).filter(Usuario.ativo == True).all()
     return [{"id": u.id, "nome": u.nome, "email": u.email, "papel": u.papel} for u in users]
 
-@app.post("/usuarios", status_code=201, tags=["Usuários"])
+@app.post("/usuarios", status_code=201, tags=["UsuÃ¡rios"])
 def criar_usuario(body: UsuarioIn, db: Session = Depends(get_db), _=Depends(require_admin)):
     if db.query(Usuario).filter(Usuario.email == body.email).first():
-        raise HTTPException(400, "E-mail já cadastrado.")
+        raise HTTPException(400, "E-mail jÃ¡ cadastrado.")
     u = Usuario(nome=body.nome, email=body.email,
                 senha_hash=hash_password(body.senha), papel=body.papel)
     db.add(u); db.commit(); db.refresh(u)
