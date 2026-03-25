@@ -1,0 +1,184 @@
+[33mcommit d134c85e9418a557cdb14408e67bc11fd651dab6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Joaquim <bjoaquim242@gmail.com>
+Date:   Tue Mar 24 16:24:28 2026 -0300
+
+    Atualiza README, banco e painel
+
+[1mdiff --git a/README.md b/README.md[m
+[1mindex e050de8..979876c 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -1,57 +1,122 @@[m
+[31m-# Lucía – Assistente de Tarefas em Python[m
+ [m
+[31m-Lucía é um assistente simples de terminal desenvolvido em Python para gerenciamento de tarefas.[m
+[31m-O sistema permite registrar, listar, concluir e remover tarefas utilizando comandos em linguagem natural.[m
+ [m
+[31m-O objetivo do projeto é praticar conceitos de:[m
+[32m+[m[32m# 🎯 Lucia – Sistema de Gestão de Protocolos[m[41m[m
+ [m
+[31m-* Python[m
+[31m-* Manipulação de arquivos[m
+[31m-* Estruturas de dados[m
+[31m-* Processamento de linguagem natural[m
+[31m-* Organização de código[m
+[32m+[m[32m**Lucia** é uma aplicação backend moderna desenvolvida em **FastAPI**, projetada para gerenciamento de protocolos e atendimento de solicitações em múltiplos departamentos. É uma solução escalável, segura e pronta para produção, ideal para empresas ou órgãos públicos.[m[41m[m
+ [m
+ ---[m
+ [m
+[31m-## Funcionalidades[m
+[32m+[m[32m## 🏗️ Estrutura do Projeto[m[41m[m
+ [m
+[31m-* Adicionar novas tarefas[m
+[31m-* Listar tarefas registradas[m
+[31m-* Marcar tarefas como concluídas[m
+[31m-* Remover tarefas[m
+[31m-* Armazenamento em arquivo JSON[m
+[31m-* Interpretação básica de comandos usando NLP[m
+[32m+[m[32m```[m[41m[m
+[32m+[m[32mIA_lucia/[m[41m[m
+[32m+[m[32m├─ main.py            # Ponto de entrada da aplicação FastAPI[m[41m[m
+[32m+[m[32m├─ lucia.py           # Lógica principal da aplicação[m[41m[m
+[32m+[m[32m├─ database.py        # Configuração e modelos do banco de dados[m[41m[m
+[32m+[m[32m├─ painel_lucia.html   # Interface visual (frontend leve)[m[41m[m
+[32m+[m[32m├─ requirements.txt   # Dependências do Python[m[41m[m
+[32m+[m[32m├─ Procfile           # Comando para deploy em Railway/Heroku[m[41m[m
+[32m+[m[32m├─ src/               # Código modular adicional[m[41m[m
+[32m+[m[32m└─ README.md          # Documentação do projeto[m[41m[m
+[32m+[m[32m```[m[41m[m
+ [m
+ ---[m
+ [m
+[31m-## Tecnologias utilizadas[m
+[32m+[m[32m## ⚡ Tecnologias Utilizadas[m[41m[m
+ [m
+[31m-* Python[m
+[31m-* spaCy (Processamento de linguagem natural)[m
+[31m-* JSON (armazenamento de dados)[m
+[32m+[m[32m* **Python 3.11+**[m[41m[m
+[32m+[m[32m* **FastAPI** – API backend moderna e rápida[m[41m[m
+[32m+[m[32m* **SQLAlchemy** – ORM para PostgreSQL/SQLite[m[41m[m
+[32m+[m[32m* **Uvicorn** – Servidor ASGI[m[41m[m
+[32m+[m[32m* **WebSocket** – Notificações em tempo real[m[41m[m
+[32m+[m[32m* **JWT + bcrypt** – Autenticação segura[m[41m[m
+[32m+[m[32m* **CORS** – Suporte a frontends externos[m[41m[m
+ [m
+ ---[m
+ [m
+[31m-## Estrutura do Projeto[m
+[32m+[m[32m## 🧩 Componentes Principais[m[41m[m
+ [m
+[31m-```[m
+[31m-lucia/[m
+[31m-│[m
+[31m-├── lucia.py[m
+[31m-├── tarefas.json[m
+[31m-└── README.md[m
+[32m+[m[32m### 1. Backend (FastAPI)[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* Endpoints REST completos[m[41m[m
+[32m+[m[32m* Autenticação JWT e roles de usuário (`admin`, `atendente`)[m[41m[m
+[32m+[m[32m* WebSocket para notificações instantâneas[m[41m[m
+[32m+[m[32m* CRUD completo de protocolos e atendentes[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m### 2. Banco de Dados[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* **Usuários:** login, senha criptografada e permissões[m[41m[m
+[32m+[m[32m* **Departamentos:** 8 departamentos pré-configurados[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m  * Suporte, RH, Financeiro, Obras, Jurídico, Ouvidoria, Compras, TI[m[41m[m
+[32m+[m[32m* **Protocolos:** controle de solicitações, status e histórico[m[41m[m
+[32m+[m[32m* **Atendentes:** gestão de staff por departamento[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m### 3. Funcionalidades Chave[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* Criação automática de números de protocolo (`YYYYMMDD-####`)[m[41m[m
+[32m+[m[32m* 4 status de protocolo: Aberto, Em andamento, Resolvido, Cancelado[m[41m[m
+[32m+[m[32m* Filtragem por departamento e status[m[41m[m
+[32m+[m[32m* Notificações em tempo real via WebSocket[m[41m[m
+[32m+[m[32m* Suporte a PostgreSQL e SQLite[m[41m[m
+[32m+[m[32m* CORS habilitado para frontend[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m### 4. Frontend[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* Painel visual simples (`painel_lucia.html`) para interação básica[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m---[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m## 🚀 Deploy e Produção[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* **Procfile** configurado para Railway ou Heroku:[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m```text[m[41m[m
+[32m+[m[32mweb: uvicorn main:app --host 0.0.0.0 --port $PORT[m[41m[m
+ ```[m
+ [m
+[31m-* **lucia.py** → código principal do sistema[m
+[31m-* **tarefas.json** → arquivo onde as tarefas são armazenadas[m
+[31m-* **README.md** → documentação do projeto[m
+[32m+[m[32m* Repositório pronto para deploy automático[m[41m[m
+[32m+[m[32m* Arquitetura modular e limpa para manutenção futura[m[41m[m
+ [m
+ ---[m
+ [m
+[31m-## Instalação[m
+[32m+[m[32m## ⚙️ Como Rodar Localmente[m[41m[m
+ [m
+[31m-### 1. Instalar dependências[m
+[32m+[m[32m1. Criar e ativar ambiente virtual:[m[41m[m
+ [m
+[32m+[m[32m```bash[m[41m[m
+[32m+[m[32mpython -m venv .venv[m[41m[m
+[32m+[m[32msource .venv/Scripts/activate  # Windows[m[41m[m
+[32m+[m[32msource .venv/bin/activate      # Linux/macOS[m[41m[m
+ ```[m
+[31m-pi[m
+[32m+[m[41m[m
+[32m+[m[32m2. Instalar dependências:[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m```bash[m[41m[m
+[32m+[m[32mpip install -r requirements.txt[m[41m[m
+[32m+[m[32m```[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m3. Rodar a aplicação:[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m```bash[m[41m[m
+[32m+[m[32muvicorn main:app --reload[m[41m[m
+[32m+[m[32m```[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m4. Acessar no navegador:[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m```[m[41m[m
+[32m+[m[32mhttp://127.0.0.1:8000[m[41m[m
+ ```[m
+[32m+[m[41m[m
+[32m+[m[32m---[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m## ✅ Por que usar Lucia?[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m* Sistema completo **enterprise-grade** para gerenciamento de protocolos[m[41m[m
+[32m+[m[32m* Fácil de adaptar e escalar[m[41m[m
+[32m+[m[32m* Histórico e rastreamento completo de solicitações[m[41m[m
+[32m+[m[32m* Notificações em tempo real para usuários e atendentes[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m---[m[41m[m
+[41m+[m
+[41m+[m
+[1mdiff --git a/lucia.db b/lucia.db[m
+[1mindex 6694b2d..655a466 100644[m
+Binary files a/lucia.db and b/lucia.db differ
+[1mdiff --git a/painel_lucia.html b/painel_lucia.html[m
+[1mindex 70715ac..6b4a82f 100644[m
+[1m--- a/painel_lucia.html[m
+[1m+++ b/painel_lucia.html[m
+[36m@@ -4,8 +4,8 @@[m
+ <meta charset="UTF-8"/>[m
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>[m
+   <script>[m
+[31m-     API = "https://lucia-production.up.railway.app";[m
+[31m-     WS_URL = "wss://lucia-production.up.railway.app/ws";[m
+[32m+[m[32m      API = "https://ialucia-production.up.railway.app";[m
+[32m+[m[32m      WS_URL = "wss://ialucia-production.up.railway.app/ws";[m
+   </script>[m
+ <title>Lucía — Painel Administrativo v2</title>[m
+ <script src="https://unpkg.com/react@18/umd/react.development.js"></script>[m
