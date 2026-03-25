@@ -7,11 +7,11 @@ from .config import settings
 from .database import Base, engine
 
 
-app = FastAPI(title="Users API", version="1.0.0")
-
+app = FastAPI(title="Users API", version="1.0.0") 
+origins = settings.get_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
