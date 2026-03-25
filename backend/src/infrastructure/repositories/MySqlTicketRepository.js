@@ -1,7 +1,7 @@
 import { TicketRepository } from '../../domain/repositories/TicketRepository.js';
 import { Ticket } from '../../domain/entities/Ticket.js';
 
-export class PostgresTicketRepository extends TicketRepository {
+export class MySqlTicketRepository extends TicketRepository {
   constructor(pool) {
     super();
     this.pool = pool;
@@ -20,37 +20,35 @@ export class PostgresTicketRepository extends TicketRepository {
   }
 
   async findAll() {
-    const result = await this.pool.query('SELECT * FROM tickets ORDER BY created_at DESC');
-    return result.rows.map((row) => this.mapRow(row));
+    const [rows] = await this.pool.query('SELECT * FROM tickets ORDER BY created_at DESC');
+    return rows.map((row) => this.mapRow(row));
   }
 
   async findById(id) {
-    const result = await this.pool.query('SELECT * FROM tickets WHERE id = $1 LIMIT 1', [id]);
-    if (result.rowCount === 0) return null;
-    return this.mapRow(result.rows[0]);
+    const [rows] = await this.pool.query('SELECT * FROM tickets WHERE id = ? LIMIT 1', [id]);
+    if (rows.length === 0) return null;
+    return this.mapRow(rows[0]);
   }
 
   async create(ticket) {
-    const result = await this.pool.query(
+    const [result] = await this.pool.query(
       `INSERT INTO tickets (requester_name, department, description, status)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       VALUES (?, ?, ?, ?)`,
       [ticket.requesterName, ticket.department, ticket.description, ticket.status],
     );
 
-    return this.mapRow(result.rows[0]);
+    return this.findById(result.insertId);
   }
 
   async updateStatus(id, status) {
-    const result = await this.pool.query(
+    const [result] = await this.pool.query(
       `UPDATE tickets
-       SET status = $2, updated_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
-      [id, status],
+       SET status = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [status, id],
     );
 
-    if (result.rowCount === 0) return null;
-    return this.mapRow(result.rows[0]);
+    if (result.affectedRows === 0) return null;
+    return this.findById(id);
   }
 }
