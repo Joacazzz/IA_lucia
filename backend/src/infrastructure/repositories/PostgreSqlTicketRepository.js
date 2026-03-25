@@ -1,7 +1,7 @@
 import { TicketRepository } from '../../domain/repositories/TicketRepository.js';
 import { Ticket } from '../../domain/entities/Ticket.js';
 
-export class MySqlTicketRepository extends TicketRepository {
+export class PostgreSqlTicketRepository extends TicketRepository {
   constructor(pool) {
     super();
     this.pool = pool;
@@ -20,34 +20,37 @@ export class MySqlTicketRepository extends TicketRepository {
   }
 
   async findAll() {
-    const [rows] = await this.pool.query('SELECT * FROM tickets ORDER BY created_at DESC');
+    const { rows } = await this.pool.query('SELECT * FROM tickets ORDER BY created_at DESC');
     return rows.map((row) => this.mapRow(row));
   }
 
   async findById(id) {
-    const [rows] = await this.pool.query('SELECT * FROM tickets WHERE id = ? LIMIT 1', [id]);
+    const { rows } = await this.pool.query('SELECT * FROM tickets WHERE id = $1 LIMIT 1', [id]);
     if (rows.length === 0) return null;
     return this.mapRow(rows[0]);
   }
 
   async create(ticket) {
-    const [result] = await this.pool.query(
+    const { rows } = await this.pool.query(
       `INSERT INTO tickets (requester_name, department, description, status)
-       VALUES (?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
       [ticket.requesterName, ticket.department, ticket.description, ticket.status],
     );
 
-    return this.findById(result.insertId);
+    return this.mapRow(rows[0]);
   }
 
   async updateStatus(id, status) {
-    await this.pool.query(
+    const { rows } = await this.pool.query(
       `UPDATE tickets
-       SET status = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`,
+       SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
       [status, id],
     );
 
-    return this.findById(id);
+    if (rows.length === 0) return null;
+    return this.mapRow(rows[0]);
   }
 }
