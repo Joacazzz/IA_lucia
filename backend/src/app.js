@@ -1,5 +1,5 @@
 import { pool } from './infrastructure/db/postgresPool.js';
-import { PostgreSqlTicketRepository } from './infrastructure/repositories/PostgreSqlTicketRepository.js';
+import { PostgresTicketRepository } from './infrastructure/repositories/PostgresTicketRepository.js';
 import { ListTicketsUseCase } from './application/use-cases/ListTicketsUseCase.js';
 import { CreateTicketUseCase } from './application/use-cases/CreateTicketUseCase.js';
 import { UpdateTicketStatusUseCase } from './application/use-cases/UpdateTicketStatusUseCase.js';
@@ -8,11 +8,11 @@ import { createTicketRouter } from './presentation/http/routes/ticketRoutes.js';
 import { errorHandler } from './presentation/http/middlewares/errorHandler.js';
 import { createServer } from './presentation/http/server.js';
 
-const ticketRepository = new PostgreSqlTicketRepository(pool);
+const ticketRepository = new PostgresTicketRepository(pool);
 
 const ticketController = new TicketController({
-  listTicketsUseCase: new ListTicketsUseCase(ticketRepository),
-  createTicketUseCase: new CreateTicketUseCase(ticketRepository),
+  listTicketsUseCase:        new ListTicketsUseCase(ticketRepository),
+  createTicketUseCase:       new CreateTicketUseCase(ticketRepository),
   updateTicketStatusUseCase: new UpdateTicketStatusUseCase(ticketRepository),
 });
 
