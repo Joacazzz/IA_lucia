@@ -1,1 +1,0 @@
-CREATE DATABASE lucia_db;
