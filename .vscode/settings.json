@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "\"problems.exclude\": {   \"**/.vscode/extensions/**\": true }": true
+    }
+}
+

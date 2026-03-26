@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from .api.routes.users import router as users_router
+from users import router as users_router
 from .config import settings
 from .database import Base, engine
 
