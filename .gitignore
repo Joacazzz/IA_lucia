@@ -1,0 +1,17 @@
+# ambiente virtual
+.venv/
+venv/
+
+# arquivos sensíveis
+.env
+
+# cache python (esse lixo que você tentou subir)
+__pycache__/
+*.pyc
+
+# VSCode (porque ele adora enfiar coisa inútil)
+.vscode/
+
+# sistema
+.DS_Store
+Thumbs.db
