@@ -1,0 +1,10 @@
+$kind: collection
+name: Luica API
+auth:
+  - id: 3939d018-69a6-41b0-b3eb-19d8a127b930
+    type: apikey
+    name: API Key
+  - id: cf33f565-1ef7-4a82-b263-9cc46d592bf4
+    type: apikey
+    name: API Key
+order: 1874660267393023
