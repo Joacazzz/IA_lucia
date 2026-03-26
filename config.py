@@ -1,6 +1,15 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    DATABASE_URL: str
+    PORT: int = 8000
+    CORS_ORIGINS: str = "http://localhost:5173"
+
+    def get_origins(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",")]
+
+
+settings = Settings()
