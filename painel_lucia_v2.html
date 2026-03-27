@@ -4,6 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Lucía — Painel Administrativo v2</title>
+<script>
+const API = "https://ialucia-production.up.railway.app";
+
+async function api(path, method = "GET", body) {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(API + path, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` })
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Erro na API");
+  }
+
+  return res.json();
+}
+</script>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -191,7 +214,7 @@ tr:hover td { background:rgba(255,255,255,.015); }
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-const API    = "https://ialucia-production.up.railway.app";
+
 const WS_URL = "wss://ialucia-production.up.railway.app/ws";
 
 // ── Mock data ────────────────────────────────────────────────
