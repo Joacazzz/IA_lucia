@@ -11,7 +11,7 @@ ALGORITHM  = "HS256"
 TOKEN_HORAS = 8
 
 pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def hash_password(plain: str):
     return pwd_context.hash(plain.encode("utf-8")[:72])
