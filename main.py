@@ -9,7 +9,6 @@ import os
 
 from database import get_db, criar_banco, Departamento, Protocolo, Atendente, Usuario
 from auth import hash_password, verify_password, create_token, get_current_user, require_admin
-from fastapi.security import OAuth2PasswordRequestForm
 
 app = FastAPI(title="API Sistema Lucía v2", version="2.0.0")
 
@@ -125,13 +124,13 @@ def health():
 
 # ── Auth ───────────────────────────────────────────────────────
 @app.post("/auth/login", tags=["Auth"])
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(body: LoginIn, db: Session = Depends(get_db)):
     user = db.query(Usuario).filter(
-        Usuario.email == form_data.username,
+        Usuario.email == body.email,
         Usuario.ativo == True
     ).first()
 
-    if not user or not verify_password(form_data.password, user.senha_hash):
+    if not user or not verify_password(body.password, user.senha_hash):
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
 
     token = create_token({"sub": user.email, "papel": user.papel})
@@ -281,3 +280,4 @@ def criar_usuario(body: UsuarioIn, db: Session = Depends(get_db), _=Depends(requ
 def painel_html():
     html_path = os.path.join(os.path.dirname(__file__), "painel_lucia_v2.html")
     return FileResponse(html_path)
+
