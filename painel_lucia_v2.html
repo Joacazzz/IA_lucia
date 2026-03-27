@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Lucía — Painel Administrativo v2</title>
 <script>
+
 const API = "https://ialucia-production.up.railway.app";
 
 async function api(path, method = "GET", body) {
@@ -212,9 +213,8 @@ tr:hover td { background:rgba(255,255,255,.015); }
 <body>
 <div id="root"></div>
 <script type="text/babel">
+
 const { useState, useEffect, useRef, useCallback } = React;
-
-
 const WS_URL = "wss://ialucia-production.up.railway.app/ws";
 
 // ── Mock data ────────────────────────────────────────────────
