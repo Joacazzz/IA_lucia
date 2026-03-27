@@ -1,10 +1,10 @@
 import datetime
 import json
 import os
-import spacy
+
 
 # Carregar modelo de linguagem
-nlp = spacy.load("pt_core_news_sm")
+
 
 ARQUIVO_PROTOCOLOS = "protocolos.json"
 CONTADOR_ARQUIVO = "contador.json"
