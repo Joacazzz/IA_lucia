@@ -122,7 +122,7 @@ def raiz():
         os.path.dirname(__file__),
         "painel_lucia_v2.html"
     )
-    return FileResponse(html_path)
+    return FileResponse(os.path.join(BASE_DIR, "painel_lucia_v2.html"))
 
 @app.get("/health", tags=["Sistema"])
 def health():
@@ -285,4 +285,4 @@ def criar_usuario(body: UsuarioIn, db: Session = Depends(get_db), _=Depends(requ
 @app.get("/painel", tags=["Frontend"])
 def painel_html():
     html_path = Path(__file__).parent / "static" / "painel_lucia_v2.html"
-    return FileResponse(html_path)
+    return FileResponse(os.path.join(BASE_DIR, "static", "painel_lucia_v2.html"))
