@@ -899,7 +899,7 @@ function App() {
         <div className="content">
           {!apiOk && (
             <div className="api-banner">
-              ⚠️ API offline — dados de demonstração. Para conectar: <span className="banner-code">python -m uvicorn main:app --reload</span>
+              ⚠️ API offline — dados de demonstração. Para conectar: <span className="banner-code">python -m uvicorn app.main:app --reload</span>
             </div>
           )}
           {page === "dashboard"     && <PageDashboard protos={protos} deptos={deptos}/>}

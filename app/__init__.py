@@ -1,0 +1,1 @@
+"""Lucía application package."""
