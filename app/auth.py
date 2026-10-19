@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from database import get_db, Usuario
+from .database import get_db, Usuario
 
 SECRET_KEY  = "lucia-sistema-atendimento-2026"
 ALGORITHM   = "HS256"
