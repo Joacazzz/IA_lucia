@@ -1,4 +1,6 @@
-﻿from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+﻿import os
+
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
@@ -114,9 +116,13 @@ class UsuarioIn(BaseModel):
     papel: str = "atendente"
 
 # ── Rotas Sistema ──────────────────────────────────────────────
-@app.get("/", tags=["Sistema"])
+@app.get("/")
 def raiz():
-    return {"sistema": "Lucía v2", "status": "online", "docs": "/docs"}
+    html_path = os.path.join(
+        os.path.dirname(__file__),
+        "painel_lucia_v2.html"
+    )
+    return FileResponse(html_path)
 
 @app.get("/health", tags=["Sistema"])
 def health():
