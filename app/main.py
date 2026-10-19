@@ -9,6 +9,8 @@ from fastapi.responses import FileResponse
 import datetime
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+
 from .database import get_db, criar_banco, Departamento, Protocolo, Atendente, Usuario
 from .auth import hash_password, verify_password, create_token, get_current_user, require_admin
 
