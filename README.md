@@ -116,3 +116,6 @@ geral, protocolos, atendentes, departamentos e notificações em tempo real.
 
 Para detalhes sobre as mudanças de desempenho e decisões da refatoração, veja
 [REFATORACAO.md](./REFATORACAO.md).
+
+##Licença
+MIT
