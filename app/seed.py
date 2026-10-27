@@ -1,23 +1,13 @@
-"""Criação de tabelas, índices e dados iniciais (executado no startup)."""
+"""Criação de índices e dados iniciais (executado no startup)."""
 import logging
 import secrets
 
-from sqlalchemy import text
-
 from .config import settings
-from .database import Base, SessionLocal, engine
-from .models import Departamento, Usuario
+from .database import client, db
+from .documents import next_id, utcnow
 from .security import hash_password
 
 log = logging.getLogger("lucia")
-
-# Índices novos para bancos já existentes (create_all não altera tabelas prontas).
-# Os nomes são os mesmos declarados em models.py, então é seguro rodar sempre.
-_INDEXES = (
-    "CREATE INDEX IF NOT EXISTS ix_protocolos_criado_em ON protocolos (criado_em)",
-    "CREATE INDEX IF NOT EXISTS ix_protocolos_status_criado ON protocolos (status, criado_em)",
-    "CREATE INDEX IF NOT EXISTS ix_atendentes_departamento_chave ON atendentes (departamento_chave)",
-)
 
 DEPARTAMENTOS = [
     ("suporte",    "Suporte Tecnico",          "🛠️", "1001", "suporte@empresa.com.br",    "Seg-Sex 08h-18h", "Problemas tecnicos e sistemas."),
@@ -32,39 +22,54 @@ DEPARTAMENTOS = [
 
 
 def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
-    _ensure_indexes()
-    with SessionLocal() as db:
-        _seed_departamentos(db)
-        _seed_admin(db)
+    client.admin.command("ping")
+    db.usuarios.create_index("email", unique=True)
+    db.departamentos.create_index("chave", unique=True)
+    db.protocolos.create_index("numero", unique=True)
+    db.atendentes.create_index("email", unique=True)
+    for collection in ("usuarios", "departamentos", "protocolos", "atendentes"):
+        db[collection].create_index("id", unique=True)
+    db.protocolos.create_index([("criado_em", -1), ("id", -1)])
+    db.protocolos.create_index([("status", 1), ("criado_em", -1)])
+    db.atendentes.create_index("departamento_chave")
+
+    _seed_departamentos()
+    _seed_admin()
 
 
-def _ensure_indexes() -> None:
-    try:
-        with engine.begin() as conn:
-            for stmt in _INDEXES:
-                conn.execute(text(stmt))
-    except Exception:  # índice é otimização; nunca derruba a API
-        log.exception("Não foi possível criar índices")
-
-
-def _seed_departamentos(db) -> None:
-    if db.query(Departamento.id).first():
+def _seed_departamentos() -> None:
+    if db.departamentos.find_one({}, {"_id": 1}):
         return
-    db.add_all(
-        Departamento(chave=c, nome=n, icone=i, ramal=r, email=e, horario=h, descricao=d)
-        for c, n, i, r, e, h, d in DEPARTAMENTOS
-    )
-    db.commit()
+    documentos = [
+        {
+            "id": next_id("departamentos"),
+            "chave": chave,
+            "nome": nome,
+            "icone": icone,
+            "ramal": ramal,
+            "email": email,
+            "horario": horario,
+            "descricao": descricao,
+            "ativo": True,
+        }
+        for chave, nome, icone, ramal, email, horario, descricao in DEPARTAMENTOS
+    ]
+    db.departamentos.insert_many(documentos)
 
 
-def _seed_admin(db) -> None:
-    if db.query(Usuario.id).first():
+def _seed_admin() -> None:
+    if db.usuarios.find_one({}, {"_id": 1}):
         return
     senha = settings.ADMIN_PASSWORD or secrets.token_urlsafe(12)
-    db.add(Usuario(nome="Administrador", email=settings.ADMIN_EMAIL,
-                   senha_hash=hash_password(senha), papel="admin"))
-    db.commit()
+    db.usuarios.insert_one({
+        "id": next_id("usuarios"),
+        "nome": "Administrador",
+        "email": settings.ADMIN_EMAIL,
+        "senha_hash": hash_password(senha),
+        "papel": "admin",
+        "ativo": True,
+        "criado_em": utcnow(),
+    })
     if settings.ADMIN_PASSWORD:
         log.warning("Admin inicial criado: %s", settings.ADMIN_EMAIL)
     else:

@@ -1,7 +1,10 @@
-const API = (
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "http://localhost:8000" : "https://ialucia-production.up.railway.app")
-).replace(/\/$/, "");
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
+
+if (!API_URL) {
+  throw new Error("Configure VITE_API_URL com a URL pública da API.");
+}
+
+const API = API_URL.replace(/\/$/, "");
 
 export const WS_URL = API.replace(/^http/, "ws") + "/ws";
 

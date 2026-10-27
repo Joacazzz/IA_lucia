@@ -1,13 +1,13 @@
 import datetime as dt
+import re
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
-from ..models import Departamento, Protocolo
+from ..documents import next_id, utcnow
 from ..realtime import manager
 from ..schemas import ProtoCreate, ProtocoloOut, ProtoUpdate, Status
 from ..security import get_current_user, require_admin
@@ -28,85 +28,97 @@ def listar(
     q: Optional[str] = Query(None, max_length=100, description="Busca por nome do solicitante ou número"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ):
-    query = db.query(Protocolo)
+    filtro = {}
     if departamento:
-        query = query.filter(Protocolo.departamento_chave == departamento)
+        filtro["departamento_chave"] = departamento
     if status:
-        query = query.filter(Protocolo.status == status)
+        filtro["status"] = status
     if q:
-        like = f"%{q.strip()}%"
-        query = query.filter(Protocolo.nome_solicitante.ilike(like) | Protocolo.numero.ilike(like))
-    # Total (para paginação) vai no header: o corpo continua sendo uma lista simples.
-    response.headers["X-Total-Count"] = str(query.count())
-    return query.order_by(Protocolo.criado_em.desc(), Protocolo.id.desc()).offset(offset).limit(limit).all()
+        termo = re.escape(q.strip())
+        filtro["$or"] = [
+            {"nome_solicitante": {"$regex": termo, "$options": "i"}},
+            {"numero": {"$regex": termo, "$options": "i"}},
+        ]
+    response.headers["X-Total-Count"] = str(db.protocolos.count_documents(filtro))
+    return list(
+        db.protocolos.find(filtro)
+        .sort([("criado_em", -1), ("id", -1)])
+        .skip(offset)
+        .limit(limit)
+    )
 
 
 @router.get("/{numero}", response_model=ProtocoloOut)
-def buscar(numero: str, db: Session = Depends(get_db)):
-    p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
+def buscar(numero: str, db=Depends(get_db)):
+    p = db.protocolos.find_one({"numero": numero})
     if not p:
         raise HTTPException(404, "Protocolo não encontrado.")
     return p
 
 
 @router.post("", status_code=201, response_model=ProtocoloOut)
-def criar(body: ProtoCreate, background: BackgroundTasks, db: Session = Depends(get_db)):
-    depto = db.query(Departamento).filter(Departamento.chave == body.departamento_chave).first()
+def criar(body: ProtoCreate, background: BackgroundTasks, db=Depends(get_db)):
+    depto = db.departamentos.find_one({"chave": body.departamento_chave})
     if not depto:
         raise HTTPException(400, "Departamento inválido.")
 
-    p = Protocolo(
-        departamento_chave=body.departamento_chave,
-        nome_solicitante=body.nome_solicitante,
-        contato=body.contato,
-        descricao=body.descricao,
-        status="Aberto",
-    )
-    db.add(p)
-    db.flush()  # gera o id sem depender de count()+1 (que gerava duplicata após exclusões)
-    p.numero = f"{dt.datetime.now(_TZ):%Y%m%d}-{p.id:04d}"
-    db.commit()
-    db.refresh(p)
+    agora = utcnow()
+    protocolo_id = next_id("protocolos")
+    numero = f"{dt.datetime.now(_TZ):%Y%m%d}-{protocolo_id:04d}"
+    p = {
+        "id": protocolo_id,
+        "numero": numero,
+        "departamento_chave": body.departamento_chave,
+        "nome_solicitante": body.nome_solicitante,
+        "contato": body.contato,
+        "descricao": body.descricao,
+        "status": "Aberto",
+        "criado_em": agora,
+        "atualizado_em": agora,
+    }
+    db.protocolos.insert_one(p)
 
     background.add_task(manager.broadcast, {
         "tipo": "novo_protocolo",
-        "mensagem": f"Novo protocolo {p.numero} — {depto.nome}",
-        "protocolo": p.numero,
-        "departamento": p.departamento_chave,
+        "mensagem": f"Novo protocolo {p['numero']} — {depto['nome']}",
+        "protocolo": p["numero"],
+        "departamento": p["departamento_chave"],
         "timestamp": _agora(),
     })
     return p
 
 
 @router.patch("/{numero}", response_model=ProtocoloOut)
-def atualizar(numero: str, body: ProtoUpdate, background: BackgroundTasks, db: Session = Depends(get_db)):
-    p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
+def atualizar(numero: str, body: ProtoUpdate, background: BackgroundTasks, db=Depends(get_db)):
+    p = db.protocolos.find_one({"numero": numero})
     if not p:
         raise HTTPException(404, "Protocolo não encontrado.")
+    atualizacao = {}
     if body.status:
-        p.status = body.status
+        atualizacao["status"] = body.status
     if body.descricao:
-        p.descricao = body.descricao
-    db.commit()
-    db.refresh(p)
+        atualizacao["descricao"] = body.descricao
+    if atualizacao:
+        atualizacao["atualizado_em"] = utcnow()
+        db.protocolos.update_one({"id": p["id"]}, {"$set": atualizacao})
+        p.update(atualizacao)
 
     background.add_task(manager.broadcast, {
         "tipo": "status_atualizado",
-        "mensagem": f"Protocolo {p.numero} → {p.status}",
-        "protocolo": p.numero,
-        "status": p.status,
+        "mensagem": f"Protocolo {p['numero']} → {p['status']}",
+        "protocolo": p["numero"],
+        "status": p["status"],
         "timestamp": _agora(),
     })
     return p
 
 
 @router.delete("/{numero}")
-def deletar(numero: str, db: Session = Depends(get_db)):
-    p = db.query(Protocolo).filter(Protocolo.numero == numero).first()
+def deletar(numero: str, db=Depends(get_db)):
+    p = db.protocolos.find_one({"numero": numero})
     if not p:
         raise HTTPException(404, "Protocolo não encontrado.")
-    db.delete(p)
-    db.commit()
+    db.protocolos.delete_one({"id": p["id"]})
     return {"mensagem": f"Protocolo {numero} removido."}

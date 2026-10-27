@@ -5,11 +5,9 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import get_db
-from .models import Usuario
 
 ALGORITHM = "HS256"
 
@@ -43,21 +41,21 @@ def _unauthorized() -> HTTPException:
 
 def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
-    db: Session = Depends(get_db),
-) -> Usuario:
+    db=Depends(get_db),
+) -> dict:
     if not credentials:
         raise _unauthorized()
     payload = decode_token(credentials.credentials)
     email = payload.get("sub") if payload else None
     if not email:
         raise _unauthorized()
-    user = db.query(Usuario).filter(Usuario.email == email, Usuario.ativo.is_(True)).first()
+    user = db.usuarios.find_one({"email": email, "ativo": True})
     if not user:
         raise _unauthorized()
     return user
 
 
-def require_admin(user: Usuario = Depends(get_current_user)) -> Usuario:
-    if user.papel != "admin":
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user["papel"] != "admin":
         raise HTTPException(403, "Acesso restrito a administradores.")
     return user

@@ -1,10 +1,9 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Atendente, Departamento
+from ..documents import next_id
 from ..schemas import AtendenteIn, AtendenteOut
 from ..security import get_current_user
 
@@ -12,31 +11,34 @@ router = APIRouter(prefix="/atendentes", tags=["Atendentes"], dependencies=[Depe
 
 
 @router.get("", response_model=list[AtendenteOut])
-def listar(departamento: Optional[str] = None, db: Session = Depends(get_db)):
-    q = db.query(Atendente).filter(Atendente.ativo.is_(True))
+def listar(departamento: Optional[str] = None, db=Depends(get_db)):
+    filtro = {"ativo": True}
     if departamento:
-        q = q.filter(Atendente.departamento_chave == departamento)
-    return q.order_by(Atendente.nome).all()
+        filtro["departamento_chave"] = departamento
+    return list(db.atendentes.find(filtro).sort("nome", 1))
 
 
 @router.post("", status_code=201, response_model=AtendenteOut)
-def criar(body: AtendenteIn, db: Session = Depends(get_db)):
-    if db.query(Atendente.id).filter(Atendente.email == body.email).first():
+def criar(body: AtendenteIn, db=Depends(get_db)):
+    if db.atendentes.find_one({"email": body.email}, {"_id": 1}):
         raise HTTPException(400, "E-mail já cadastrado.")
-    if not db.query(Departamento.id).filter(Departamento.chave == body.departamento_chave).first():
+    if not db.departamentos.find_one({"chave": body.departamento_chave}, {"_id": 1}):
         raise HTTPException(400, "Departamento inválido.")
-    a = Atendente(nome=body.nome, email=body.email, departamento_chave=body.departamento_chave)
-    db.add(a)
-    db.commit()
-    db.refresh(a)
+    a = {
+        "id": next_id("atendentes"),
+        "nome": body.nome,
+        "email": body.email,
+        "departamento_chave": body.departamento_chave,
+        "ativo": True,
+    }
+    db.atendentes.insert_one(a)
     return a
 
 
 @router.delete("/{id}")
-def desativar(id: int, db: Session = Depends(get_db)):
-    a = db.get(Atendente, id)
+def desativar(id: int, db=Depends(get_db)):
+    a = db.atendentes.find_one({"id": id})
     if not a:
         raise HTTPException(404, "Atendente não encontrado.")
-    a.ativo = False
-    db.commit()
-    return {"mensagem": f"Atendente {a.nome} desativado."}
+    db.atendentes.update_one({"id": id}, {"$set": {"ativo": False}})
+    return {"mensagem": f"Atendente {a['nome']} desativado."}

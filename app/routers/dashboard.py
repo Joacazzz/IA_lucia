@@ -2,12 +2,9 @@ import datetime as dt
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import func
-from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
-from ..models import Protocolo
 from ..schemas import DiaTotal, ResumoOut
 from ..security import get_current_user
 
@@ -16,13 +13,16 @@ _TZ = ZoneInfo(settings.TIMEZONE)
 
 
 @router.get("/resumo", response_model=ResumoOut)
-def resumo(db: Session = Depends(get_db)):
-    """Tudo que o dashboard precisa em UMA requisição, agregado no banco.
-
-    Antes o painel baixava 200 protocolos completos e contava no navegador.
-    """
-    por_status = dict(db.query(Protocolo.status, func.count()).group_by(Protocolo.status).all())
-    por_depto = dict(db.query(Protocolo.departamento_chave, func.count()).group_by(Protocolo.departamento_chave).all())
+def resumo(db=Depends(get_db)):
+    """Retorna em uma requisição os totais necessários para o dashboard."""
+    status_resultado = db.protocolos.aggregate([
+        {"$group": {"_id": "$status", "total": {"$sum": 1}}},
+    ])
+    depto_resultado = db.protocolos.aggregate([
+        {"$group": {"_id": "$departamento_chave", "total": {"$sum": 1}}},
+    ])
+    por_status = {item["_id"]: item["total"] for item in status_resultado}
+    por_depto = {item["_id"]: item["total"] for item in depto_resultado}
 
     hoje = dt.datetime.now(_TZ).date()
     dias = [hoje - dt.timedelta(days=i) for i in range(6, -1, -1)]
@@ -30,13 +30,13 @@ def resumo(db: Session = Depends(get_db)):
         dt.datetime.combine(dias[0], dt.time.min, tzinfo=_TZ).astimezone(dt.timezone.utc).replace(tzinfo=None)
     )
     contagem = dict.fromkeys(dias, 0)
-    # Só a coluna de data, só da última semana (usa ix_protocolos_criado_em).
-    for (criado,) in db.query(Protocolo.criado_em).filter(Protocolo.criado_em >= inicio_utc):
+    for doc in db.protocolos.find({"criado_em": {"$gte": inicio_utc}}, {"criado_em": 1, "_id": 0}):
+        criado = doc["criado_em"]
         local = criado.replace(tzinfo=dt.timezone.utc).astimezone(_TZ).date()
         if local in contagem:
             contagem[local] += 1
 
-    recentes = db.query(Protocolo).order_by(Protocolo.criado_em.desc(), Protocolo.id.desc()).limit(5).all()
+    recentes = list(db.protocolos.find().sort([("criado_em", -1), ("id", -1)]).limit(5))
 
     return ResumoOut(
         total=sum(por_status.values()),

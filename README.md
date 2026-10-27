@@ -16,7 +16,25 @@ A versão de Python do projeto está indicada em `.python-version`.
 Abra um PowerShell na pasta do projeto. Se `py -3.14` não estiver disponível,
 use `python` quando ele já apontar para Python 3.14.
 
-### 1. Preparar e iniciar a API
+### 1. Configurar o MongoDB Atlas
+
+Crie um cluster no MongoDB Atlas, um usuário de banco de dados e configure o
+acesso de rede para a API. Copie a connection string do Atlas para o arquivo
+`.env` na raiz:
+
+```dotenv
+MONGODB_URI=mongodb+srv://<usuario>:<senha>@<cluster>/
+MONGODB_DATABASE=lucia
+SECRET_KEY=<chave-gerada>
+```
+
+Substitua os marcadores pelos dados do seu cluster e codifique caracteres
+especiais da senha na URL. Remova a variável antiga `DATABASE_URL`, se ainda
+existir no `.env`. Não compartilhe nem versione esse arquivo.
+Gere `SECRET_KEY` com
+`python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+
+### 2. Preparar e iniciar a API
 
 ```powershell
 python --version
@@ -33,11 +51,11 @@ Com a API em execução:
 - Documentação interativa: <http://localhost:8000/docs>
 - Verificação de saúde: <http://localhost:8000/health>
 
-Por padrão, o backend usa SQLite no arquivo `lucia.db`. O banco e a senha de um
-usuário já existente são preservados; a configuração de usuário inicial só é
-usada quando ainda não há usuários cadastrados.
+O primeiro início cria as coleções, índices e departamentos padrão. As
+configurações `ADMIN_EMAIL` e `ADMIN_PASSWORD` são usadas somente se ainda não
+houver usuário cadastrado.
 
-### 2. Preparar e iniciar o painel
+### 3. Preparar e iniciar o painel
 
 Em outro terminal PowerShell:
 
@@ -66,8 +84,9 @@ raiz. As principais são:
 
 | Variável | Uso |
 |---|---|
-| `DATABASE_URL` | Banco de dados. Sem configuração, usa `sqlite:///./lucia.db`. |
-| `SECRET_KEY` | Chave de assinatura dos tokens. Em produção, é obrigatória. |
+| `MONGODB_URI` | Connection string do MongoDB Atlas. |
+| `MONGODB_DATABASE` | Nome da base; por padrão, `lucia`. |
+| `SECRET_KEY` | Chave de assinatura dos tokens. Obrigatória fora do MongoDB local. |
 | `CORS_ORIGINS` | Origens permitidas, separadas por vírgula. |
 | `ADMIN_EMAIL` | E-mail usado para criar o primeiro usuário administrador. |
 | `ADMIN_PASSWORD` | Senha usada para criar o primeiro usuário administrador. |
@@ -77,6 +96,22 @@ raiz. As principais são:
 Defina `ADMIN_EMAIL` e `ADMIN_PASSWORD` antes da primeira inicialização para
 escolher as credenciais do administrador inicial. Não compartilhe nem versione
 arquivos `.env` ou chaves secretas.
+
+### Importar dados do antigo SQLite
+
+Se já houver dados em `lucia.db`, faça a importação **antes de iniciar a API
+com o novo banco**. O destino no Atlas precisa estar vazio; a ferramenta
+interrompe a importação se encontrar dados para evitar duplicações.
+
+Com `MONGODB_URI` e `MONGODB_DATABASE` configurados no `.env`, execute na raiz:
+
+```powershell
+python -m app.migrate_sqlite_to_mongo .\lucia.db
+```
+
+O importador mantém os IDs, protocolos, usuários e senhas existentes. Guarde
+uma cópia de segurança do arquivo SQLite e confira a contagem exibida antes de
+continuar.
 
 ## Testes e build
 
@@ -97,16 +132,26 @@ npm run build
 
 ### API
 
-O comando de inicialização está em `railway.toml`. No Railway, configure ao
-menos `SECRET_KEY` e `DATABASE_URL`; configure também `CORS_ORIGINS` com a
-origem publicada do painel. Não use a chave de desenvolvimento em produção.
+O arquivo `render.yaml` prepara a API como Web Service no Render. Crie o serviço
+a partir do repositório e informe as variáveis solicitadas:
+
+- `MONGODB_URI`: connection string do Atlas.
+- `MONGODB_DATABASE`: nome da base.
+- `SECRET_KEY`: gere uma chave com
+  `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+- `ADMIN_EMAIL` e `ADMIN_PASSWORD`: credenciais iniciais do administrador.
+- `CORS_ORIGINS`: origem pública do painel, sem barra final.
+
+No Atlas, crie um usuário de banco com permissões apenas na base da aplicação e
+permita a conexão de rede do serviço do Render. Não use a chave secreta de
+desenvolvimento em produção.
 
 ### Painel
 
-Publique a pasta `frontend` como aplicação Vite e defina `VITE_API_URL` com a
-URL pública da API, sem `/` no final. Recompile/republique o painel depois de
-alterar essa variável. A API e o painel devem ser publicados juntos para que
-login, chamadas HTTP e WebSocket usem a configuração correta.
+Publique `frontend` como site estático (por exemplo, no Render) e defina
+`VITE_API_URL` com a URL pública da API, sem `/` no final. Recompile/republique
+o painel depois de alterar essa variável. A origem do painel deve constar em
+`CORS_ORIGINS` na API para login, chamadas HTTP e WebSocket funcionarem.
 
 ## Interface
 

@@ -1,13 +1,19 @@
 import os
-import tempfile
 
-_tmp = tempfile.mkdtemp()
-os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
+os.environ["MONGODB_URI"] = "mongodb://localhost:27017"
+os.environ["MONGODB_DATABASE"] = "lucia_test"
+os.environ["DATABASE_URL"] = ""
 os.environ["SECRET_KEY"] = "teste-secret-key-com-tamanho-suficiente-123456"
 os.environ["ADMIN_PASSWORD"] = "senha-de-teste-1"
 
 import pytest
+import mongomock
 from fastapi.testclient import TestClient
+
+from app import database
+
+database.client = mongomock.MongoClient()
+database.db = database.client["lucia_test"]
 
 from app.main import app
 
